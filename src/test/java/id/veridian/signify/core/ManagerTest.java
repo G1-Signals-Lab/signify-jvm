@@ -714,4 +714,20 @@ class ManagerTest {
 
         assertInstanceOf(Keeping.RandyKeeper.class, keeper1);
     }
+
+    @Test
+    @DisplayName("Salty keeper rotates to an empty next key set onto the keys committed at inception")
+    void testSaltyKeeper_RotatesToNoNextKeys() {
+        Salter salter = new Salter(RawArgs.builder().raw("0123456789abcdefghijk".getBytes()).build());
+        Keeping.KeyManager manager = new Keeping.KeyManager(salter, Collections.emptyList());
+        Keeping.Keeper<?> keeper = manager.create(Manager.Algos.salty, 0, new HashMap<>(java.util.Map.of("transferable", true)));
+
+        List<String> committed = keeper.incept(true).digers();
+        Keeping.KeeperResult rotated = keeper.rotate(List.of(), true, List.of(), List.of());
+
+        assertEquals(List.of(), rotated.digers());
+        assertEquals(1, rotated.verfers().size());
+        Verfer current = new Verfer(rotated.verfers().getFirst());
+        assertEquals(committed.getFirst(), new Diger(MatterCodex.Blake3_256.getValue(), current.getQb64b()).getQb64());
+    }
 }

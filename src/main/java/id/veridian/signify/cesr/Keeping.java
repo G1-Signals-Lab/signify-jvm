@@ -351,12 +351,13 @@ public class Keeping {
                 List<KeyStateRecord> states,
                 List<KeyStateRecord> rstates
         ) {
+            List<String> pcodes = this.ncodes;
             this.ncodes = ncodes;
             this.transferable = transferable;
 
             Manager.Keys signers = creator.create(
-                    this.ncodes,
-                    ncount,
+                    pcodes,
+                    pcodes.size(),
                     ncode,
                     this.transferable,
                     pidx,
@@ -371,7 +372,7 @@ public class Keeping {
             this.kidx = this.kidx + this.icodes.size();
             Manager.Keys nsigners = creator.create(
                     this.ncodes,
-                    ncount,
+                    this.ncodes.size(),
                     ncode,
                     this.transferable,
                     pidx,
