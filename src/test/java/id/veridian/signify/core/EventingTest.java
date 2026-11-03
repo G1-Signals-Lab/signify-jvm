@@ -5,6 +5,7 @@ import id.veridian.signify.cesr.Codex.MatterCodex;
 import id.veridian.signify.cesr.args.InceptArgs;
 import id.veridian.signify.cesr.args.RawArgs;
 import id.veridian.signify.cesr.args.RotateArgs;
+import id.veridian.signify.cesr.exception.InvalidValueException;
 import id.veridian.signify.cesr.util.CoreUtil;
 import id.veridian.signify.cesr.util.Utils;
 import org.junit.jupiter.api.Test;
@@ -182,6 +183,38 @@ public class EventingTest {
         assertEquals("a", createRotation(10, keys0, serder));
         assertEquals("e", createRotation(14, keys0, serder));
         assertEquals("ff", createRotation(255, keys0, serder));
+    }
+
+    @Test
+    void rotateShouldAllowAbandonmentToNoNextKeys() {
+        Signer signer0 = new Signer();
+        Signer signer1 = new Signer();
+        List<String> ndigs = List.of(new Diger(new RawArgs(), signer1.getVerfer().getQb64b()).getQb64());
+        Serder icp = Eventing.incept(InceptArgs.builder()
+                .keys(List.of(signer0.getVerfer().getQb64()))
+                .ndigs(ndigs)
+                .build());
+
+        Serder rot = Eventing.rotate(RotateArgs.builder()
+                .keys(List.of(signer1.getVerfer().getQb64()))
+                .pre((String) icp.getKed().get("i"))
+                .dig((String) icp.getKed().get("d"))
+                .ndigs(List.of())
+                .sn(1)
+                .isith(1)
+                .nsith("0")
+                .build());
+
+        assertEquals("0", rot.getKed().get("nt"));
+        assertEquals(List.of(), rot.getKed().get("n"));
+        assertThrows(InvalidValueException.class, () -> Eventing.rotate(RotateArgs.builder()
+                .keys(List.of(signer1.getVerfer().getQb64()))
+                .pre((String) icp.getKed().get("i"))
+                .ndigs(List.of())
+                .sn(1)
+                .isith(1)
+                .nsith(-1)
+                .build()));
     }
 
     private String createRotation(int sn, List<String> keys, Serder serder ) {

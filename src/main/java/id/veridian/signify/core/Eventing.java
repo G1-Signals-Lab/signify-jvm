@@ -398,8 +398,8 @@ public class Eventing {
         }
 
         Tholder ntholder = new Tholder(null, null, _nsith);
-        if (ntholder.getNum() != null && ntholder.getNum() < 1) {
-            throw new InvalidValueException("Invalid sith = " + ntholder.getNum() + "less than 1.");
+        if (ntholder.getNum() != null && ntholder.getNum() < 0) {
+            throw new InvalidValueException("Invalid sith = " + ntholder.getNum() + "less than 0.");
         }
         if (ntholder.getSize() > _ndigs.size()) {
             throw new InvalidValueException("Invalid sith = " + ntholder.getNum() + "for keys = " + _ndigs);
