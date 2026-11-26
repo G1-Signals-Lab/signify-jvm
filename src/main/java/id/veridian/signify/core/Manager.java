@@ -661,7 +661,8 @@ public class Manager {
     public enum Algos {
         randy("randy"),
         salty("salty"),
-        group("group");
+        group("group"),
+        extern("extern");
 
         private final String value;
 
