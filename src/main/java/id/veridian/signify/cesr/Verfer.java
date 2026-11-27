@@ -7,7 +7,7 @@ import id.veridian.signify.cesr.exception.UnexpectedCodeException;
 
 public class Verfer extends Matter {
     private Verifier verifier;
-    private final LazySodiumJava lazySodium = LazySodiumInstance.getInstance();
+    private LazySodiumJava lazySodium;
 
     public Verfer(String qb64) {
         super(qb64);
@@ -29,7 +29,13 @@ public class Verfer extends Matter {
         switch (codex) {
             case Ed25519N:
             case Ed25519:
+                this.lazySodium = LazySodiumInstance.getInstance();
                 this.verifier = this::_ed25519;
+                break;
+            case ECDSA_256r1N:
+            case ECDSA_256r1:
+                P256.publicKey(this.getRaw());
+                this.verifier = P256::verify;
                 break;
             default:
                 throw new UnexpectedCodeException("Unsupported code = " + this.getCode() + " for verifier.");

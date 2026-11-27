@@ -80,12 +80,16 @@ public class Keeping {
         public KeyManager(Salter salter, List<ExternalModule> externalModules) {
             this.salter = salter;
             for (ExternalModule mod : externalModules) {
-                modules.put(mod.type(), mod.module());
+                if (mod == null || mod.type() == null || mod.type().isBlank() || mod.module() == null
+                        || modules.putIfAbsent(mod.type(), mod.module()) != null) {
+                    throw new IllegalArgumentException("Invalid external keeper module");
+                }
             }
         }
 
         public Keeper<? extends KeeperParams> create(Algos algo, int pidx, Map<String, Object> kargs) {
             return switch (algo) {
+                case extern -> external(kargs.get("extern_type"), pidx, kargs.get("extern"));
                 case salty -> new SaltyKeeper(
                         salter,
                         pidx,
@@ -176,8 +180,37 @@ public class Keeping {
                         groupKeyState.getNdigs()
                 );
             } else {
-                throw new UnsupportedOperationException("Algo not allowed yet");
+                var external = aid.getExtern();
+                if (external == null || external.getPidx() == null) {
+                    throw new UnsupportedOperationException("Algo not allowed yet");
+                }
+                if (aid.getState() == null || aid.getState().getK() == null) {
+                    throw new IllegalArgumentException("Missing restored identifier key state");
+                }
+                var restored = new HashMap<String, Object>();
+                if (external.getAdditionalProperties() != null) restored.putAll(external.getAdditionalProperties());
+                restored.put("state_keys", List.copyOf(aid.getState().getK()));
+                return external(external.getExternType(), external.getPidx(), restored);
             }
+        }
+
+        private Keeper<? extends KeeperParams> external(Object type, int pidx, Object raw) {
+            if (!(type instanceof String name) || pidx < 0 || !(raw instanceof Map<?, ?> values)) {
+                throw new IllegalArgumentException("Invalid external keeper descriptor");
+            }
+            var module = modules.get(name);
+            if (module == null || values.keySet().stream().anyMatch(key -> !(key instanceof String))) {
+                throw new IllegalArgumentException("Unknown external keeper module");
+            }
+            var descriptor = new HashMap<String, Object>();
+            values.forEach((key, value) -> descriptor.put((String) key, value));
+            descriptor.put("extern_type", name);
+            descriptor.put("pidx", pidx);
+            var keeper = module.createKeeper(pidx, KeeperParams.builder().paramsMap(Map.copyOf(descriptor)).build());
+            if (keeper == null || keeper.getAlgo() != Algos.extern) {
+                throw new IllegalArgumentException("Invalid external keeper module result");
+            }
+            return keeper;
         }
     }
 

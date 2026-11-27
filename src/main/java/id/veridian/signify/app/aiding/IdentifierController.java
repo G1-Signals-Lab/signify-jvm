@@ -387,7 +387,7 @@ public class IdentifierController {
 
     public EventResult<KelOperation> rotate(String name, RotateIdentifierArgs kargs) {
         boolean transferable = kargs.getTransferable() != null ? kargs.getTransferable() : true;
-        String ncode = kargs.getNcode() != null ? kargs.getNcode() : MatterCodex.Ed25519_Seed.getValue();
+        String ncode = kargs.getNcode();
         int ncount = kargs.getNcount() != null ? kargs.getNcount() : 1;
 
         HabState hab = this.get(name)
@@ -396,6 +396,11 @@ public class IdentifierController {
         boolean delegated = !hab.getState().getDi().isEmpty();
 
         KeyStateRecord state = hab.getState();
+        if (ncode == null) {
+            ncode = state.getK() != null && state.getK().size() == 1
+                    ? id.veridian.signify.cesr.P256.nextSeedCode(state.getK().getFirst())
+                    : MatterCodex.Ed25519_Seed.getValue();
+        }
         int count = state.getK().size();
         String dig = state.getD();
         int ridx = Integer.parseInt(state.getS(), 16) + 1;
